@@ -1,42 +1,79 @@
-# Nginx 이미지를 베이스로 사용
-FROM nginx:latest
+# 빌드를 위한 임시 이미지
+FROM nginx:alpine as builder
 
-ENV MINIO_BUCKET_NAME=your-bucket-name 
-ENV MINIO_ACCESS_KEY=your-access-key 
-ENV MINIO_SECRET_KEY=your-secret-key 
-ENV MINIO_SERVER=your-mino-server
+RUN export NGINX_VERSION=$(nginx -v 2>&1 | grep -o '[0-9.]*')
 
-# Python과 필요한 도구 설치
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip inotify-tools && \
-    rm -rf /var/lib/apt/lists/*
+RUN echo $NGINX_VERSION > nginx_version.txt
 
-# Python 라이브러리 설치 (MinIO 클라이언트)
-RUN pip3 install minio
+# 필요한 빌드 도구 및 의존성 설치 (로깅 최소화)
+RUN apk update --quiet && apk add --no-cache --quiet \
+    build-base \
+    pcre-dev \
+    openssl-dev \
+    zlib-dev \
+    wget \
+    unzip \
+    linux-headers
 
-# Nginx RTMP 모듈 설치
-RUN apt-get update && \
-    apt-get install -y build-essential libpcre3 libpcre3-dev libssl-dev zlib1g-dev wget && \
-    wget http://nginx.org/download/nginx-$(nginx -v 2>&1 | grep -o '[0-9.]*').tar.gz && \
-    wget https://github.com/arut/nginx-rtmp-module/archive/master.zip && \
-    tar -zxvf nginx-*.tar.gz && unzip master.zip && \
-    cd nginx-* && \
-    ./configure --with-http_ssl_module --add-module=../nginx-rtmp-module-master && \
+# Nginx 버전 추출
+RUN NGINX_VERSION=$(nginx -v 2>&1 | grep -o '[0-9.]*')
+
+# Nginx 및 RTMP 모듈 다운로드 및 컴파일 (로깅 최소화)
+RUN wget -q http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz && \
+    wget -q https://github.com/arut/nginx-rtmp-module/archive/master.zip && \
+    tar -zxvf nginx-$NGINX_VERSION.tar.gz && unzip -qq master.zip && \
+    cd nginx-$NGINX_VERSION && \
+    ./configure \
+        --prefix=/etc/nginx \
+        --conf-path=/etc/nginx/nginx.conf \
+        --error-log-path=/var/log/nginx/error.log \
+        --http-log-path=/var/log/nginx/access.log \
+        --pid-path=/var/log/nginx/nginx.pid \
+        --with-http_ssl_module \
+        --add-module=../nginx-rtmp-module-master && \
     make && make install
 
-# Nginx 설정 파일 복사
+# 최종 이미지
+FROM nginx:alpine
+
+# 환경 변수 설정
+ENV INSTREAM_TENANT_SERVER your-tenant-server:8080
+ENV MINIO_BUCKET_NAME your-bucket-name 
+ENV MINIO_ACCESS_KEY your-access-key 
+ENV MINIO_SECRET_KEY your-secret-key 
+ENV MINIO_SERVER your-mino-server
+
+# 필요한 도구 설치
+RUN apk add --no-cache inotify-tools curl pcre ffmpeg
+
+# MinIO 클라이언트(mc) 설치
+RUN curl -sO https://dl.min.io/client/mc/release/linux-amd64/mc && \
+    chmod +x mc && \
+    mv mc /usr/bin
+
+COPY --from=builder nginx_version.txt nginx_version.txt
+
+RUN export NGINX_VERSION=$(cat nginx_version.txt)
+
+# 빌드된 Nginx 및 RTMP 모듈 복사
+COPY --from=builder /nginx-$NGINX_VERSION/objs/nginx /usr/sbin/nginx
+RUN chmod +x /usr/sbin/nginx
+RUN ls -al /usr/sbin/nginx
+
+# Nginx 설정 파일 및 스크립트 복사
 COPY nginx.conf /etc/nginx/nginx.conf
-
-# 스크립트 파일 복사
+COPY exec_ffmpeg.sh /app/exec_ffmpeg.sh
 COPY watch_hls_dir.sh /app/watch_hls_dir.sh
-COPY upload_to_minio.py /app/upload_to_minio.py
+RUN chmod +x /app/watch_hls_dir.sh /app/exec_ffmpeg.sh
 
-# 스크립트 실행 가능하게 설정
-RUN chmod +x /app/watch_hls_dir.sh
-RUN chmod +x /app/upload_to_minio.py
+# RTMP 로그 확인
+RUN mkdir -p /var/log/nginx/rtmp && \
+    touch /var/log/nginx/rtmp/access.log
 
-# HLS 파일을 저장할 디렉토리 생성
-RUN mkdir -p /var/www/html/hls
+# FFmpeg 로그 확인
+RUN mkdir -p /var/log/ffmpeg && \
+    touch /var/log/ffmpeg/all.log && \
+    chmod -R 755 /var/log/ffmpeg
 
-# Nginx 실행
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
+

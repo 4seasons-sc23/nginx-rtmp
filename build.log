@@ -1,0 +1,103 @@
+#1 [internal] load build definition from Dockerfile
+#1 sha256:e4538c3e96d4ff63c7bf2e6d794a01a5fc512a1e9de46bb1c462d220dbba1586
+#1 transferring dockerfile: 37B done
+#1 DONE 0.0s
+
+#2 [internal] load .dockerignore
+#2 sha256:fcc6aeebca9cfa0a8a6e808559fcb07116f3a7dcc917a73edb2e8b63511c1285
+#2 transferring context: 2B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/nginx:alpine
+#3 sha256:87243556dbc4cd795e64c4878589b6fd2be81cec66efa21c4597f094b4526bec
+#3 DONE 0.8s
+
+#4 [stage-1  1/14] FROM docker.io/library/nginx:alpine@sha256:db353d0f0c479c91bd15e01fc68ed0f33d9c4c52f3415e63332c3d0bf7a4bb77
+#4 sha256:8aaa9da84a6c2214f6415eb9fb8421699617a5929e07ed5025776b3e1003505a
+#4 DONE 0.0s
+
+#17 [internal] load build context
+#17 sha256:75f98b2de312330adf6d0ca8d40304ff1ef35207a24152a3a16860303c01f616
+#17 transferring context: 1.08kB 0.0s done
+#17 DONE 0.0s
+
+#10 [builder 5/6] RUN NGINX_VERSION=$(nginx -v 2>&1 | grep -o '[0-9.]*')
+#10 sha256:a18f0d5b690285c52c8bba35b7f7474d580cdd59261f5d9567c55cb34e930530
+#10 CACHED
+
+#5 [stage-1  2/14] RUN apk add --no-cache inotify-tools curl pcre ffmpeg
+#5 sha256:a1c0c65067a050df32a28a69d709ef52b76f4338b974fe55580856998261df8c
+#5 CACHED
+
+#12 [stage-1  4/14] COPY --from=builder nginx_version.txt nginx_version.txt
+#12 sha256:e004a308d4a684c8333b8c02817f024045be1be1680823fb2ac0f63b2e645118
+#12 CACHED
+
+#14 [stage-1  6/14] COPY --from=builder /nginx-1.25.3/objs/nginx /usr/sbin/nginx
+#14 sha256:096a6c5c15f88eedde506651b42af34e5a1b0dd4c19975662f0a6d0283a676b0
+#14 CACHED
+
+#6 [stage-1  3/14] RUN curl -sO https://dl.min.io/client/mc/release/linux-amd64/mc &&     chmod +x mc &&     mv mc /usr/bin
+#6 sha256:8f1c17ed216b2bc9ace17a9e30ec693e8750aaa6add32c74b80a57ed7c6a39ec
+#6 CACHED
+
+#7 [builder 2/6] RUN export NGINX_VERSION=$(nginx -v 2>&1 | grep -o '[0-9.]*')
+#7 sha256:c11c9ec11a826916242d5898cf5693bd47c85dd604ce5bb7b1aa3d59aa99751a
+#7 CACHED
+
+#8 [builder 3/6] RUN echo 1.25.3 > nginx_version.txt
+#8 sha256:f064a7717e69cda9fb5cacda8f02126abc1a84eec637fdb187268787a34f0f13
+#8 CACHED
+
+#13 [stage-1  5/14] RUN export NGINX_VERSION=$(cat nginx_version.txt)
+#13 sha256:2fccc76162e2798ba30299ebdb8e0fa32be3464fa2a93c0878c09da57c2e11c6
+#13 CACHED
+
+#9 [builder 4/6] RUN apk update --quiet && apk add --no-cache --quiet     build-base     pcre-dev     openssl-dev     zlib-dev     wget     unzip     linux-headers
+#9 sha256:d87cb6a018489d6b6c69f445092f0ff8e8a683038c7eb1598235f7cf15e58b00
+#9 CACHED
+
+#16 [stage-1  8/14] RUN ls -al /usr/sbin/nginx
+#16 sha256:a5ed151fb613058394ed3dc65a69aa9d38593e4989cae1c6084efc112e43e798
+#16 CACHED
+
+#15 [stage-1  7/14] RUN chmod +x /usr/sbin/nginx
+#15 sha256:e9436bd45655b59d4b8e644f68b479f620e960436d0e8c1f2906811bd8b61ff6
+#15 CACHED
+
+#11 [builder 6/6] RUN wget -q http://nginx.org/download/nginx-1.25.3.tar.gz &&     wget -q https://github.com/arut/nginx-rtmp-module/archive/master.zip &&     tar -zxvf nginx-1.25.3.tar.gz && unzip -qq master.zip &&     cd nginx-1.25.3 &&     ./configure         --prefix=/etc/nginx         --conf-path=/etc/nginx/nginx.conf         --error-log-path=/var/log/nginx/error.log         --http-log-path=/var/log/nginx/access.log         --pid-path=/var/log/nginx/nginx.pid         --with-http_ssl_module         --add-module=../nginx-rtmp-module-master &&     make && make install
+#11 sha256:482eea00dc5299e630f8761291156374cfea60c3ee7b32b4362855224808511f
+#11 CACHED
+
+#18 [stage-1  9/14] COPY nginx.conf /etc/nginx/nginx.conf
+#18 sha256:4aeb243665c7386f62503dafd9cabb46f169f6a88c91bda4b544a1fecdbab02a
+#18 CACHED
+
+#19 [stage-1 10/14] COPY exec_ffmpeg.sh /app/exec_ffmpeg.sh
+#19 sha256:dacfb88cbf211f33c89d402dd85485a85ecf3bf64a7d5ffc7fd4aad576eff9a8
+#19 DONE 0.0s
+
+#20 [stage-1 11/14] COPY watch_hls_dir.sh /app/watch_hls_dir.sh
+#20 sha256:d9eee3cb273b1c51da6adc8e3d232fd8d94ed8d032e0fd28fe10b2be666392d7
+#20 DONE 0.0s
+
+#21 [stage-1 12/14] RUN chmod +x /app/watch_hls_dir.sh /app/exec_ffmpeg.sh
+#21 sha256:0587256a6b85beb7ee593718f75b6df74fa6e57a24824467e82a90181cfaeb88
+#21 DONE 0.1s
+
+#22 [stage-1 13/14] RUN mkdir -p /var/log/nginx/rtmp &&     touch /var/log/nginx/rtmp/access.log
+#22 sha256:cf2ecaa3c9ed170de4d1060e4fdf0e2918bf4f6a29d34eed3fada197f1907043
+#22 DONE 0.2s
+
+#23 [stage-1 14/14] RUN mkdir -p /var/log/ffmpeg &&     touch /var/log/ffmpeg/all.log &&     chmod -R 755 /var/log/ffmpeg
+#23 sha256:8617e9fb933d4b7cee8230255ba7723bae6bf32942cf689e4a1866991514d46f
+#23 DONE 0.3s
+
+#24 exporting to image
+#24 sha256:e8c613e07b0b7ff33893b694f7759a10d42e180f2b4dc349fb57dc6b71dcab00
+#24 exporting layers 0.0s done
+#24 writing image sha256:050cb4ab03f1ccf10ca7f80fed4b1afcdc098e3526701f0b0ab5bff6aacc9213 done
+#24 naming to docker.io/library/instream-media-server done
+#24 DONE 0.1s
+
+Use 'docker scan' to run Snyk tests against images to find vulnerabilities and learn how to fix them

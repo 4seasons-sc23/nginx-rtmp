@@ -1,2 +1,3 @@
 hls-data
 docker-compose.yaml
+.env
