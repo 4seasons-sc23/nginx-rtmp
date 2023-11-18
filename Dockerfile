@@ -65,8 +65,7 @@ RUN ls -al /usr/sbin/nginx
 
 # Nginx 설정 파일 및 스크립트 복사
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY sh/exec_ffmpeg.sh /app/exec_ffmpeg.sh
-COPY sh/watch_hls_dir.sh /app/watch_hls_dir.sh
+COPY sh/ /app/
 RUN chmod +x /app/watch_hls_dir.sh /app/exec_ffmpeg.sh
 
 # RTMP 로그 확인

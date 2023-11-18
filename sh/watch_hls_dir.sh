@@ -4,6 +4,8 @@ HLS_DIR=$1  # 예: /tmp/hls
 WATCH_FLAG=$2
 declare -A upload_flags
 
+echo "paramenter 1: $HLS_DIR 2: $WATCH_FLAG" >> /var/log/hls/all.log
+
 upload_via_http() {
     api_key=$1
     quality=$2
@@ -28,16 +30,20 @@ upload_via_http() {
 
 # HLS 디렉토리 감시 시작
 if [ "$WATCH_FLAG" = "true" ]; then
-    inotifywait -m -e create -e moved_to --format '%f' "$HLS_DIR" | while read FILE 
+    echo "Start watch on $HLS_DIR" >> /var/log/hls/all.log
+    inotifywait -m -r -e create -e moved_to --format '%f' "$HLS_DIR" 2>&1 | while read FILE 
     do
+        echo "echo $FILE" >> /var/log/hls/all.log
         if [[ $FILE == *.ts ]]; then
+            echo "echo $FILE" >> /var/log/hls/all.log
+
             api_key=$(echo $FILE | cut -d'_' -f1)
             quality=$(echo $FILE | cut -d'_' -f2)
             ts_file="$HLS_DIR/$FILE"
             
-            upload_via_http "$api_key" "$quality" "$ts_file" >> /var/log/hls/all.log
+            upload_via_http "$api_key" "$quality" "$ts_file" 2>&1
         fi
-    done
+    done >> /var/log/hls/all.log
 
 # HLS 디렉토리 감시 중단
 elif [ "$WATCH_FLAG" = "false" ]; then
