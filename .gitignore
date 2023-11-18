@@ -1,3 +1,4 @@
 hls-data
 docker-compose.yaml
 .env
+build.log

@@ -1,6 +1,11 @@
 # 빌드를 위한 임시 이미지
 FROM nginx:alpine as builder
 
+# 환경 변수 설정
+ENV INSTREAM_TENANT_SERVER your-tenant-server
+ENV INSTREAM_TENANT_SERVER_PORT 8080
+ENV HLS_PATH /path/to/hls
+
 RUN export NGINX_VERSION=$(nginx -v 2>&1 | grep -o '[0-9.]*')
 
 RUN echo $NGINX_VERSION > nginx_version.txt
@@ -37,11 +42,9 @@ RUN wget -q http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz && \
 FROM nginx:alpine
 
 # 환경 변수 설정
-ENV INSTREAM_TENANT_SERVER your-tenant-server:8080
-ENV MINIO_BUCKET_NAME your-bucket-name 
-ENV MINIO_ACCESS_KEY your-access-key 
-ENV MINIO_SECRET_KEY your-secret-key 
-ENV MINIO_SERVER your-mino-server
+ENV INSTREAM_TENANT_SERVER your-tenant-server
+ENV INSTREAM_TENANT_SERVER_PORT 8080
+ENV HLS_PATH /path/to/hls
 
 # 필요한 도구 설치
 RUN apk add --no-cache inotify-tools curl pcre ffmpeg
@@ -62,8 +65,8 @@ RUN ls -al /usr/sbin/nginx
 
 # Nginx 설정 파일 및 스크립트 복사
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY exec_ffmpeg.sh /app/exec_ffmpeg.sh
-COPY watch_hls_dir.sh /app/watch_hls_dir.sh
+COPY sh/exec_ffmpeg.sh /app/exec_ffmpeg.sh
+COPY sh/watch_hls_dir.sh /app/watch_hls_dir.sh
 RUN chmod +x /app/watch_hls_dir.sh /app/exec_ffmpeg.sh
 
 # RTMP 로그 확인
@@ -75,5 +78,13 @@ RUN mkdir -p /var/log/ffmpeg && \
     touch /var/log/ffmpeg/all.log && \
     chmod -R 755 /var/log/ffmpeg
 
-CMD ["/usr/sbin/nginx", "-g", "daemon off;"]
+# Upload 로그 확인
+RUN mkdir -p /var/log/hls && \
+    touch /var/log/hls/all.log && \
+    chmod -R 755 /var/log/hls
+
+COPY sh/init.sh /app/init.sh
+RUN chmod +x /app/init.sh
+
+CMD ["/usr/sbin/nginx", "-g", "daemon off"]
 

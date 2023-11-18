@@ -1,28 +1,11 @@
 # nginx-rtmp
 Nginx rtmp 모듈입니다. 
 
-## 의존성
-
-### bash
-```
-nginx
-nginx-rtmp-module
-python3 
-python3-pip 
-inotify-tools
-```
-
-### python
-```
-minio
-```
-
 ## ENV
 ```sh
-ENV MINIO_BUCKET_NAME=your-bucket-name 
-ENV MINIO_ACCESS_KEY=your-access-key 
-ENV MINIO_SECRET_KEY=your-secret-key 
-ENV MINIO_SERVER=your-mino-server
+ENV INSTREAM_TENANT_SERVER your-tenant-server
+ENV INSTREAM_TENANT_SERVER_PORT 8080
+ENV HLS_PATH /path/to/hls
 ```
 
 ## 라이브 인증
