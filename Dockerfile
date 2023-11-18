@@ -1,5 +1,5 @@
 # 빌드를 위한 임시 이미지
-FROM nginx:alpine as builder
+FROM docker.io/library/nginx:alpine as builder
 
 # 환경 변수 설정
 ENV INSTREAM_TENANT_SERVER your-tenant-server
@@ -39,7 +39,7 @@ RUN wget -q http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz && \
     make && make install
 
 # 최종 이미지
-FROM nginx:alpine
+FROM docker.io/library/nginx:alpine
 
 # 환경 변수 설정
 ENV INSTREAM_TENANT_SERVER your-tenant-server
@@ -85,5 +85,8 @@ RUN mkdir -p /var/log/hls && \
 COPY sh/init.sh /app/init.sh
 RUN chmod +x /app/init.sh
 
-CMD ["/usr/sbin/nginx", "-g", "daemon off"]
+ENTRYPOINT sed -i "s|\$INSTREAM_TENANT_SERVER_PORT|$INSTREAM_TENANT_SERVER_PORT|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh && \ 
+    sed -i "s|\$INSTREAM_TENANT_SERVER|$INSTREAM_TENANT_SERVER|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh && \
+    sed -i "s|\$HLS_PATH|$HLS_PATH|g" /etc/nginx/nginx.conf && /usr/sbin/nginx -g "daemon off;"
+
 

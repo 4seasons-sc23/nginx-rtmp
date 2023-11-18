@@ -8,4 +8,3 @@ HLS_PATH=$2
 
 # exec_ffmpeg.sh 내용을 여기에 복사
 /bin/sh /app/exec_ffmpeg.sh $name &
-
