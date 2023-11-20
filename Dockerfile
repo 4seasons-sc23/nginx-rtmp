@@ -49,11 +49,6 @@ ENV HLS_PATH /path/to/hls
 # 필요한 도구 설치
 RUN apk add --no-cache inotify-tools curl pcre ffmpeg
 
-# MinIO 클라이언트(mc) 설치
-RUN curl -sO https://dl.min.io/client/mc/release/linux-amd64/mc && \
-    chmod +x mc && \
-    mv mc /usr/bin
-
 COPY --from=builder nginx_version.txt nginx_version.txt
 
 RUN export NGINX_VERSION=$(cat nginx_version.txt)
@@ -66,7 +61,7 @@ RUN ls -al /usr/sbin/nginx
 # Nginx 설정 파일 및 스크립트 복사
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY sh/ /app/
-RUN chmod +x /app/watch_hls_dir.sh /app/exec_ffmpeg.sh
+RUN chmod +x /app/*.sh
 
 # RTMP 로그 확인
 RUN mkdir -p /var/log/nginx/rtmp && \
@@ -88,5 +83,3 @@ RUN chmod +x /app/init.sh
 ENTRYPOINT sed -i "s|\$INSTREAM_TENANT_SERVER_PORT|$INSTREAM_TENANT_SERVER_PORT|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh && \ 
     sed -i "s|\$INSTREAM_TENANT_SERVER|$INSTREAM_TENANT_SERVER|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh && \
     sed -i "s|\$HLS_PATH|$HLS_PATH|g" /etc/nginx/nginx.conf && /usr/sbin/nginx -g "daemon off;"
-
-
