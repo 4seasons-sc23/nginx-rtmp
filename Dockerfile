@@ -70,16 +70,13 @@ RUN mkdir -p /var/log/nginx/rtmp && \
 # FFmpeg 로그 확인
 RUN mkdir -p /var/log/ffmpeg && \
     touch /var/log/ffmpeg/all.log && \
-    chmod -R 755 /var/log/ffmpeg
+    chmod -R 777 /var/log/ffmpeg
 
-# Upload 로그 확인
+# Upload 로그 확인  
 RUN mkdir -p /var/log/hls && \
     touch /var/log/hls/all.log && \
-    chmod -R 755 /var/log/hls
+    chmod -R 777 /var/log/hls
 
-COPY sh/init.sh /app/init.sh
-RUN chmod +x /app/init.sh
+RUN chmod +x /var/log/nginx
 
-ENTRYPOINT sed -i "s|\$INSTREAM_TENANT_SERVER_PORT|$INSTREAM_TENANT_SERVER_PORT|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh && \ 
-    sed -i "s|\$INSTREAM_TENANT_SERVER|$INSTREAM_TENANT_SERVER|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh && \
-    sed -i "s|\$HLS_PATH|$HLS_PATH|g" /etc/nginx/nginx.conf && /usr/sbin/nginx -g "daemon off;"
+ENTRYPOINT ["/app/entrypoint.sh"]

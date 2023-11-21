@@ -7,6 +7,6 @@ pids=$(ps aux | grep "ffmpeg.*$name" | grep -v grep | awk '{print $1}')
 
 # 찾은 프로세스들을 종료합니다.
 for pid in $pids; do
-  echo "Killing ffmpeg process with PID $pid"
+  echo "exec_publish_done: Killing ffmpeg process with PID $pid" >> /var/log/hls/all.log
   kill -9 $pid
 done
