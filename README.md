@@ -26,5 +26,5 @@ tcUrl - tcUrl
 pageUrl - client page url
 name - stream name
 ```
-
+ 
 2xx가 응답되면 publish를 시작합니다.
