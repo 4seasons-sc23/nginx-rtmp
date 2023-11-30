@@ -34,9 +34,9 @@ upload_via_http() {
 
     echo -e "\n===================== UPLOAD VIA HTTP ======================"
     # curl을 사용하여 HTTP POST 요청 보내기
-    echo "watch_hls_dir.sh: upload_via_http; Upload "http://$INSTREAM_TENANT_SERVER:$INSTREAM_TENANT_SERVER_PORT/api/v1/hls/upload/$quality -H ApiKey:$API_KEY $upload_files -F "ts=@$ts_file;type=video/MP2T"
+    echo "watch_hls_dir.sh: upload_via_http; Upload "http://$INSTREAM_TENANT_SERVER:$INSTREAM_TENANT_SERVER_PORT/api/v1/medias/upload/hls/$quality -H ApiKey:$API_KEY $upload_files -F "ts=@$ts_file;type=video/MP2T"
 
-    curl -s "http://$INSTREAM_TENANT_SERVER:$INSTREAM_TENANT_SERVER_PORT/api/v1/hls/upload/$quality" \
+    curl -s "http://$INSTREAM_TENANT_SERVER:$INSTREAM_TENANT_SERVER_PORT/api/v1/medias/upload/hls/$quality" \
         -H "ApiKey:$API_KEY" \
         $upload_files \
         -F "ts=@$ts_file;type=video/MP2T"
