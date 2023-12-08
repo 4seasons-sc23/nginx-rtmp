@@ -1,12 +1,14 @@
 #!/bin/sh
 
-# 환경 변수 치환
-sed -i "s|\$INSTREAM_TENANT_SERVER_PORT|$INSTREAM_TENANT_SERVER_PORT|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh
-sed -i "s|\$INSTREAM_TENANT_SERVER|$INSTREAM_TENANT_SERVER|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh
-sed -i "s|\$HLS_PATH|$HLS_PATH|g" /etc/nginx/nginx.conf
+envsubst "$(env | sed -e 's/=.*//' -e 's/^/\$/g')" < \
+  /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
-# 로깅 스크립트 백그라운드 실행
-nohup /app/process_logging.sh > /dev/stdout 2> /dev/stderr &
+# 환경 변수 치환
+sed -i "s|\$INSTREAM_TENANT_SERVER_PORT|$INSTREAM_TENANT_SERVER_PORT|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh /app/exec_publish.sh /app/exec_publish_done.sh
+sed -i "s|\$INSTREAM_TENANT_SERVER|$INSTREAM_TENANT_SERVER|g" /etc/nginx/nginx.conf /app/watch_hls_dir.sh /app/exec_publish.sh /app/exec_publish_done.sh
+
+# watch_hls_dir.sh 내용을 여기에 복사
+nohup /app/watch_hls_dir.sh > /dev/stdout 2> /dev/stderr &
 
 # nginx 실행
-exec /usr/sbin/nginx -g "daemon off;"
+exec nginx

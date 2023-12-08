@@ -1,82 +1,178 @@
-# 빌드를 위한 임시 이미지
-FROM docker.io/library/nginx:alpine as builder
+ARG NGINX_VERSION=1.23.1
+ARG NGINX_RTMP_VERSION=1.2.2
+ARG FFMPEG_VERSION=5.1
 
-# 환경 변수 설정
-ENV INSTREAM_TENANT_SERVER your-tenant-server
-ENV INSTREAM_TENANT_SERVER_PORT 8080
-ENV HLS_PATH /path/to/hls
+##############################
+# Build the NGINX-build image.
+FROM alpine:3.16.1 as build-nginx
+ARG NGINX_VERSION
+ARG NGINX_RTMP_VERSION
+ARG MAKEFLAGS="-j4"
 
-RUN export NGINX_VERSION=$(nginx -v 2>&1 | grep -o '[0-9.]*')
+# Build dependencies.
+RUN apk add --no-cache \
+  build-base \
+  ca-certificates \
+  curl \
+  gcc \
+  libc-dev \
+  libgcc \
+  linux-headers \
+  make \
+  musl-dev \
+  openssl \
+  openssl-dev \
+  pcre \
+  pcre-dev \
+  pkgconf \
+  pkgconfig \
+  zlib-dev
 
-RUN echo $NGINX_VERSION > nginx_version.txt
+WORKDIR /tmp
 
-# 필요한 빌드 도구 및 의존성 설치 (로깅 최소화)
-RUN apk update --quiet && apk add --no-cache --quiet \
-    build-base \
-    pcre-dev \
-    openssl-dev \
-    zlib-dev \
-    wget \
-    unzip \
-    linux-headers
+# Get nginx source.
+RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
+  tar zxf nginx-${NGINX_VERSION}.tar.gz && \
+  rm nginx-${NGINX_VERSION}.tar.gz
 
-# Nginx 버전 추출
-RUN NGINX_VERSION=$(nginx -v 2>&1 | grep -o '[0-9.]*')
+# Get nginx-rtmp module.
+RUN wget https://github.com/arut/nginx-rtmp-module/archive/v${NGINX_RTMP_VERSION}.tar.gz && \
+  tar zxf v${NGINX_RTMP_VERSION}.tar.gz && \
+  rm v${NGINX_RTMP_VERSION}.tar.gz
 
-# Nginx 및 RTMP 모듈 다운로드 및 컴파일 (로깅 최소화)
-RUN wget -q http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz && \
-    wget -q https://github.com/arut/nginx-rtmp-module/archive/master.zip && \
-    tar -zxvf nginx-$NGINX_VERSION.tar.gz && unzip -qq master.zip && \
-    cd nginx-$NGINX_VERSION && \
-    ./configure \
-        --prefix=/etc/nginx \
-        --conf-path=/etc/nginx/nginx.conf \
-        --error-log-path=/var/log/nginx/error.log \
-        --http-log-path=/var/log/nginx/access.log \
-        --pid-path=/var/log/nginx/nginx.pid \
-        --with-http_ssl_module \
-        --add-module=../nginx-rtmp-module-master && \
-    make && make install
+# Compile nginx with nginx-rtmp module.
+WORKDIR /tmp/nginx-${NGINX_VERSION}
+RUN \
+  ./configure \
+  --prefix=/usr/local/nginx \
+  --add-module=/tmp/nginx-rtmp-module-${NGINX_RTMP_VERSION} \
+  --conf-path=/etc/nginx/nginx.conf \
+  --with-threads \
+  --with-file-aio \
+  --with-http_ssl_module \
+  --with-debug \
+  --with-http_stub_status_module \
+  --with-cc-opt="-Wimplicit-fallthrough=0" && \
+  make && \
+  make install
 
-# 최종 이미지
-FROM docker.io/library/nginx:alpine
+###############################
+# Build the FFmpeg-build image.
+FROM alpine:3.16.1 as build-ffmpeg
+ARG FFMPEG_VERSION
+ARG PREFIX=/usr/local
+ARG MAKEFLAGS="-j4"
 
-# 환경 변수 설정
-ENV INSTREAM_TENANT_SERVER your-tenant-server
-ENV INSTREAM_TENANT_SERVER_PORT 8080
-ENV HLS_PATH /path/to/hls
+# FFmpeg build dependencies.
+RUN apk add --no-cache \
+  build-base \
+  coreutils \
+  freetype-dev \
+  lame-dev \
+  libogg-dev \
+  libass \
+  libass-dev \
+  libvpx-dev \
+  libvorbis-dev \
+  libwebp-dev \
+  libtheora-dev \
+  openssl-dev \
+  opus-dev \
+  pkgconf \
+  pkgconfig \
+  rtmpdump-dev \
+  wget \
+  x264-dev \
+  x265-dev \
+  yasm
 
-# 필요한 도구 설치
-RUN apk add --no-cache inotify-tools curl pcre ffmpeg
+RUN echo http://dl-cdn.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories
+RUN apk add --no-cache fdk-aac-dev
 
-COPY --from=builder nginx_version.txt nginx_version.txt
+WORKDIR /tmp
 
-RUN export NGINX_VERSION=$(cat nginx_version.txt)
+# Get FFmpeg source.
+RUN wget http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz && \
+  tar zxf ffmpeg-${FFMPEG_VERSION}.tar.gz && \
+  rm ffmpeg-${FFMPEG_VERSION}.tar.gz
 
-# 빌드된 Nginx 및 RTMP 모듈 복사
-COPY --from=builder /nginx-$NGINX_VERSION/objs/nginx /usr/sbin/nginx
-RUN chmod +x /usr/sbin/nginx
-RUN ls -al /usr/sbin/nginx
+# Compile ffmpeg.
+WORKDIR /tmp/ffmpeg-${FFMPEG_VERSION}
+RUN \
+  ./configure \
+  --prefix=${PREFIX} \
+  --enable-version3 \
+  --enable-gpl \
+  --enable-nonfree \
+  --enable-small \
+  --enable-libmp3lame \
+  --enable-libx264 \
+  --enable-libx265 \
+  --enable-libvpx \
+  --enable-libtheora \
+  --enable-libvorbis \
+  --enable-libopus \
+  --enable-libfdk-aac \
+  --enable-libass \
+  --enable-libwebp \
+  --enable-postproc \
+  --enable-libfreetype \
+  --enable-openssl \
+  --disable-debug \
+  --disable-doc \
+  --disable-ffplay \
+  --extra-libs="-lpthread -lm" && \
+  make && \
+  make install && \
+  make distclean
 
-# Nginx 설정 파일 및 스크립트 복사
-COPY nginx.conf /etc/nginx/nginx.conf
+# Cleanup.
+RUN rm -rf /var/cache/* /tmp/*
+
+##########################
+# Build the release image.
+FROM alpine:3.16.1
+LABEL MAINTAINER Alfred Gutierrez <alf.g.jr@gmail.com>
+
+# Set default ports.
+ENV HTTP_PORT 80
+ENV HTTPS_PORT 443
+ENV RTMP_PORT 1935
+
+RUN apk add --no-cache \
+  ca-certificates \
+  gettext \
+  openssl \
+  pcre \
+  lame \
+  libogg \
+  curl \
+  libass \
+  libvpx \
+  libvorbis \
+  libwebp \
+  libtheora \
+  opus \
+  rtmpdump \
+  x264-dev \
+  x265-dev \
+  inotify-tools \
+  jq
+
+COPY --from=build-nginx /usr/local/nginx /usr/local/nginx
+COPY --from=build-nginx /etc/nginx /etc/nginx
+COPY --from=build-ffmpeg /usr/local /usr/local
+COPY --from=build-ffmpeg /usr/lib/libfdk-aac.so.2 /usr/lib/libfdk-aac.so.2
+
+# Add NGINX path, config and static files.
+ENV PATH "${PATH}:/usr/local/nginx/sbin"
+COPY nginx.conf /etc/nginx/nginx.conf.template
+RUN mkdir -p /opt/data/hls
+
+EXPOSE 1935
+EXPOSE 80
+
 COPY sh/ /app/
 RUN chmod +x /app/*.sh
-
-# RTMP 로그 확인
-RUN mkdir -p /var/log/nginx/rtmp && \
-    touch /var/log/nginx/rtmp/access.log
-
-# FFmpeg 로그 확인
-RUN mkdir -p /var/log/ffmpeg && \
-    touch /var/log/ffmpeg/all.log && \
-    chmod -R 777 /var/log/ffmpeg
-
-# Upload 로그 확인  
-RUN mkdir -p /var/log/hls && \
-    touch /var/log/hls/all.log && \
-    chmod -R 777 /var/log/hls
-
-RUN chmod +x /var/log/nginx
 
 ENTRYPOINT ["/app/entrypoint.sh"]

@@ -1,16 +1,8 @@
 #!/bin/sh
 
-HLS_DIR=$1  # 예: /tmp/hls
-name=$2
-script_name="watch_hls_dir.sh"
-current_pid=$$
+HLS_DIR="/opt/data/hls"  # 예: /tmp/hls
 
 echo -e "\n====================== WATCH HLS DIR ======================\n"
-
-ps -ef | grep "$script_name" | grep "$name" | grep -v grep | awk -v cp=$current_pid '{ if ($1 != cp) print $1 }' | while read pid; do
-    kill $pid
-    echo "watch_hls_dir.sh: Killed $script_name with PID $pid"
-done
 
 upload_via_http() {
     api_key=$1
