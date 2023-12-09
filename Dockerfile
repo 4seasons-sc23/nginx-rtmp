@@ -1,6 +1,6 @@
 ARG NGINX_VERSION=1.23.1
 ARG NGINX_RTMP_VERSION=1.2.2
-ARG FFMPEG_VERSION=5.1
+ARG FFMPEG_VERSION=6.1
 
 ##############################
 # Build the NGINX-build image.
