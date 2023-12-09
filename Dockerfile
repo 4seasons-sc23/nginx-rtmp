@@ -104,20 +104,20 @@ RUN \
   --enable-version3 \
   --enable-gpl \
   --enable-nonfree \
-  --enable-small \
-  --enable-libmp3lame \
+  # --enable-small \
+  # --enable-libmp3lame \
   --enable-libx264 \
-  --enable-libx265 \
-  --enable-libvpx \
-  --enable-libtheora \
-  --enable-libvorbis \
-  --enable-libopus \
-  --enable-libfdk-aac \
-  --enable-libass \
-  --enable-libwebp \
+  # --enable-libx265 \
+  # --enable-libvpx \
+  # --enable-libtheora \
+  # --enable-libvorbis \
+  # --enable-libopus \
+  # --enable-libfdk-aac \
+  # --enable-libass \
+  # --enable-libwebp \
   --enable-postproc \
   --enable-libfreetype \
-  --enable-openssl \
+  # --enable-openssl \
   --disable-debug \
   --disable-doc \
   --disable-ffplay \
