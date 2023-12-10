@@ -4,7 +4,7 @@
 <div align=center>
 	<h3>📚 Tech Stack 📚</h3>
 	<p>✨ Platforms & Languages ✨</p>
-</div>
+</div> 
 <div align="center">
 	<img src="https://img.shields.io/badge/NGINX RTMP-009639?style=flat&logo=NGINX&logoColor=white" />
     <img src="https://img.shields.io/badge/Shell-5391FE?style=flat&logo=powershell&logoColor=white" />
