@@ -175,4 +175,9 @@ EXPOSE 80
 COPY sh/ /app/
 RUN chmod +x /app/*.sh
 
+# Upload 로그 확인  
+RUN mkdir -p /var/log/hls && \
+    touch /var/log/hls/all.log && \
+    chmod -R 777 /var/log/hls
+    
 ENTRYPOINT ["/app/entrypoint.sh"]
