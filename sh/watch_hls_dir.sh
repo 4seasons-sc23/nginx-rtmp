@@ -5,11 +5,11 @@ HLS_DIR="/opt/data/hls"  # 예: /tmp/hls
 echo -e "\n====================== WATCH HLS DIR ======================\n"
 
 upload_via_http() {
-    api_key=$1
+    session_id=$1
     quality=$2
     ts_file=$3
-    m3u8_main="$HLS_DIR/$api_key.m3u8"
-    m3u8_index="$HLS_DIR/${api_key}_${quality}/index.m3u8"
+    m3u8_main="$HLS_DIR/$session_id.m3u8"
+    m3u8_index="$HLS_DIR/${session_id}_${quality}/index.m3u8"
     upload_files=""
 
     # convert_crlf_to_lf $ts_file
@@ -28,7 +28,7 @@ upload_via_http() {
     # curl을 사용하여 HTTP POST 요청 보내기
     echo "watch_hls_dir.sh: upload_via_http; Upload "http://$INSTREAM_TENANT_SERVER:$INSTREAM_TENANT_SERVER_PORT/api/v1/medias/upload/hls/$quality -H ApiKey:$API_KEY $upload_files -F "ts=@$ts_file;type=video/MP2T"
 
-    curl -s "http://$INSTREAM_TENANT_SERVER:$INSTREAM_TENANT_SERVER_PORT/api/v1/medias/upload/hls/$quality" \
+    curl -s "http://$INSTREAM_TENANT_SERVER:$INSTREAM_TENANT_SERVER_PORT/api/v1/medias/${session_id}/upload/hls/$quality" \
         -H "ApiKey:$API_KEY" \
         $upload_files \
         -F "ts=@$ts_file;type=video/MP2T"
@@ -49,9 +49,9 @@ do
         API_QUALITY=${DIRNAME##*/}
 
         # API_KEY와 QUALITY를 분리합니다
-        API_KEY=${API_QUALITY%_*}
+        SESSION_ID=${API_QUALITY%_*}
         QUALITY=${API_QUALITY#*_}
 
-        upload_via_http "$API_KEY" "$QUALITY" "$FULL_PATH"
+        upload_via_http "$SESSION_ID" "$QUALITY" "$FULL_PATH"
     fi
 done
